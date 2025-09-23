@@ -52,7 +52,7 @@ void loop()
 
   if(work){
    
-    sprintf(buffer, "Work %d seconds ", count); 
+    sprintf(buffer, "Work %d sec.", count); 
 
     lcd.print(buffer);
 
