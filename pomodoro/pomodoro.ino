@@ -13,10 +13,10 @@ int lastState = LOW;
 
 bool work = false;
 bool breakTime = false;
-int timeToBreak = 200;
+int timeToBreak = 50;
 //int timeToWork = 1800;
-int timeToWork = 200;
-int timeToBreakLong = 600;
+int timeToWork = 50;
+int timeToLongBreak = 50;
 int cycle = 0;
 int count = 0;
 
@@ -25,13 +25,37 @@ char bufferAux[17];
 
 void bip(){
 
-  tone(3, 1200); 
-  delay(200);  
-  noTone(3);
+  /*tone(3, 1200); 
   delay(150);
-  tone(3, 1200); 
-  delay(150);  
+
   noTone(3);
+  delay(20);
+
+  tone(3, 1200); 
+  delay(100);
+  
+  noTone(3);
+  delay(20);
+
+  tone(3, 1200);
+  delay(50);
+
+  noTone(3);*/
+  
+  int melody[] = { 660, 660, 0, 660, 0, 510, 660, 0, 770 };
+  int duration[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+
+  for (int i = 0; i < 9; i++) {
+      if (melody[i] == 0) {
+         delay(duration[i]);
+      } else {
+         tone(3, melody[i], duration[i]);
+         delay(duration[i] * 1.30);
+         noTone(3);
+      }
+  }
+  delay(2000);
+
 }
 
 void setup() 
@@ -60,7 +84,7 @@ void loop()
     
     lcd.setCursor(0,0);
 
-    sprintf(bufferAux, "Work | Cycle: %d", cycle);
+    sprintf(bufferAux, "Work          %dC", cycle);
 
     lcd.print(bufferAux);
 
@@ -94,11 +118,38 @@ void loop()
     
     if(cycle == 3){
 
+      lcd.setCursor(0,0);
+
+      sprintf(bufferAux, "Long Break   >.<", cycle);
+
+      lcd.print(bufferAux);
+
+      lcd.setCursor(0,1);
+     
+      sprintf(buffer, "%d seconds", count); 
+
+      lcd.print(buffer);
+
+      count++;
+
+      delay(200);
+
+      if(count > timeToLongBreak){
+
+        count = 0;
+        cycle = 1;
+        work = true;
+        breakTime = false;
+
+        bip();
+      }
+
+      return;
     }
 
     lcd.setCursor(0,0);
 
-    sprintf(bufferAux, "Break | Cycle: %d", cycle);
+    sprintf(bufferAux, "Break         %dC", cycle);
 
     lcd.print(bufferAux);
 
@@ -128,8 +179,12 @@ void loop()
 
   if(lastState == LOW && currentState == HIGH){
     
-    lcd.print("Work"); 
-
+    lcd.setCursor(0,0);
+    lcd.print("Pomodoro Timer");
+    
+    lcd.setCursor(0,1);
+    lcd.print("Start!");
+    
     work = true;
     
     count = 0;
@@ -143,7 +198,7 @@ void loop()
       count++;
 
       lcd.setCursor(0,0);
-      lcd.print("~ Pomodoro Timer"); 
+      lcd.print("Pomodoro Timer"); 
       
       lcd.setCursor(0,1);
 
@@ -154,13 +209,12 @@ void loop()
       }else{
 
         lcd.print("Wait start <");
-      } 
+      }
     }    
   
   lastState = currentState;
 
-  delay(500);  
-  lcd.clear(); 
+  delay(200);
  
  /*
  for (int positionCounter = 0; positionCounter < 13; positionCounter++) {
