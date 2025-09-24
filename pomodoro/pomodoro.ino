@@ -1,14 +1,15 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h> 
 
-#define colunas 16 
-#define linhas 2 
-#define endereco  0x27 
+#define coluns 16 
+#define lines 2 
+#define address  0x27 
 
-LiquidCrystal_I2C lcd(endereco,colunas,linhas); 
+#define buzzer 3 
+
+LiquidCrystal_I2C lcd(address, coluns, lines); 
 
 int currentState;
-
 int lastState = LOW; 
 
 bool work = false;
@@ -24,38 +25,26 @@ char buffer[17];
 char bufferAux[17];
 
 void bip(){
-
-  /*tone(3, 1200); 
-  delay(150);
-
-  noTone(3);
-  delay(20);
-
-  tone(3, 1200); 
-  delay(100);
-  
-  noTone(3);
-  delay(20);
-
-  tone(3, 1200);
-  delay(50);
-
-  noTone(3);*/
   
   int melody[] = { 660, 660, 0, 660, 0, 510, 660, 0, 770 };
+
   int duration[] = { 100, 100, 100, 100, 100, 100, 100, 100, 100 };
 
   for (int i = 0; i < 9; i++) {
-      if (melody[i] == 0) {
-         delay(duration[i]);
-      } else {
-         tone(3, melody[i], duration[i]);
-         delay(duration[i] * 1.30);
-         noTone(3);
-      }
-  }
-  delay(2000);
 
+    if (melody[i] == 0) {
+
+      delay(duration[i]);
+
+    } else {
+
+      tone(buzzer, melody[i], duration[i]);
+      
+      delay(duration[i] * 1.30);
+      
+      noTone(buzzer);
+    }
+  } 
 }
 
 void setup() 
@@ -96,7 +85,7 @@ void loop()
 
     count++;
 
-    delay(200);
+    delay(1000);
     
     if(count > timeToWork){
 
@@ -132,7 +121,7 @@ void loop()
 
       count++;
 
-      delay(200);
+      delay(1000);
 
       if(count > timeToLongBreak){
 
@@ -161,7 +150,7 @@ void loop()
 
     count++;
 
-    delay(200);
+    delay(1000);
 
     if(count > timeToBreak){
 
@@ -214,7 +203,7 @@ void loop()
   
   lastState = currentState;
 
-  delay(200);
+  delay(500);
  
  /*
  for (int positionCounter = 0; positionCounter < 13; positionCounter++) {
