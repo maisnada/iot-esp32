@@ -1,28 +1,29 @@
+#include <stdbool.h>
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h> 
 
-#define coluns 16 
-#define lines 2 
-#define address  0x27 
+#define COLUNS 16 
+#define LINES 2 
+#define ADDRESS  0x27 
 
-#define buzzer 3 
+#define TOUCH 2
+#define BUZZER 3 
 
-LiquidCrystal_I2C lcd(address, coluns, lines); 
+LiquidCrystal_I2C lcd(ADDRESS, COLUNS, LINES); 
 
-int currentState;
 int lastState = LOW; 
 
+bool start = false;
 bool work = false;
 bool breakTime = false;
-int timeToBreak = 50;
-//int timeToWork = 1800;
-int timeToWork = 50;
-int timeToLongBreak = 50;
-int cycle = 0;
-int count = 0;
+bool longBreakTime = false;
 
-char buffer[17]; 
-char bufferAux[17];
+int timeToBreak = 40;
+int timeToWork = 40;
+int timeToLongBreak = 40;
+
+int cycle = 1;
+int count = 0;
 
 void bip(){
   
@@ -38,179 +39,229 @@ void bip(){
 
     } else {
 
-      tone(buzzer, melody[i], duration[i]);
+      tone(BUZZER, melody[i], duration[i]);
       
       delay(duration[i] * 1.30);
       
-      noTone(buzzer);
+      noTone(BUZZER);
     }
-  } 
+  }
+
 }
 
-void setup() 
-{  
+void setup(){
+
   lcd.init(); 
   lcd.backlight(); 
   lcd.clear(); 
 
-  pinMode(2, INPUT);
+  pinMode(TOUCH, INPUT);
+  pinMode(BUZZER, OUTPUT);
+}
 
-  pinMode(3, OUTPUT);
+void printLongBreak(LiquidCrystal_I2C lcd, int cycle, int count){
+  
+  char buffer[COLUNS]; 
+
+  char bufferAux[COLUNS];
+    
+  lcd.clear();
+
+  lcd.setCursor(0,0);
+
+  sprintf(bufferAux, "Long Break   >.<", cycle);
+
+  lcd.print(bufferAux);
+
+  lcd.setCursor(0,1);
+     
+  sprintf(buffer, "%d seconds", count); 
+
+  lcd.print(buffer);
+}
+
+void printBreak(LiquidCrystal_I2C lcd, int cycle, int count){
+
+  char buffer[COLUNS]; 
+
+  char bufferAux[COLUNS];
+  
+  lcd.clear();
+
+  lcd.setCursor(0,0);
+
+  sprintf(bufferAux, "Break         %dC", cycle);
+
+  lcd.print(bufferAux);
+
+  lcd.setCursor(0,1);
+     
+  sprintf(buffer, "%d seconds", count); 
+
+  lcd.print(buffer);
+}
+
+void printWork(LiquidCrystal_I2C lcd, int cycle, int count){
+    
+  char buffer[COLUNS]; 
+
+  char bufferAux[COLUNS];
+  
+  lcd.clear();
+
+  lcd.setCursor(0,0);
+
+  sprintf(bufferAux, "Work          %dC", cycle);
+
+  lcd.print(bufferAux);
+
+  lcd.setCursor(0,1);
+     
+  sprintf(buffer, "%d seconds", count); 
+   
+  lcd.print(buffer);
 
 }
 
-void loop() 
-{
- 
-  lcd.clear(); 
-  
-  currentState = digitalRead(2);
+bool isPressed(int lastState){
 
-  if(work){
-  
-    buffer[0] = '\0';
-    bufferAux[0] = '\0';
-    
-    lcd.setCursor(0,0);
+  int currentState = digitalRead(TOUCH);
 
-    sprintf(bufferAux, "Work          %dC", cycle);
+  if(lastState == LOW && currentState == HIGH){
 
-    lcd.print(bufferAux);
-
-    lcd.setCursor(0,1);
-     
-    sprintf(buffer, "%d seconds", count); 
-
-    lcd.print(buffer);
-
-    count++;
-
-    delay(1000);
-    
-    if(count > timeToWork){
-
-      count = 0;
-      work = false;
-      breakTime = true;
-
-      bip();
-    }
-
-    return;
-
+    return true;
   }
 
-  if(breakTime){
+  return false;
+}
 
-    buffer[0] = '\0';
-    bufferAux[0] = '\0';
-    
-    if(cycle == 3){
+void printPauseTimer(LiquidCrystal_I2C lcd){
 
-      lcd.setCursor(0,0);
+  lcd.clear();
 
-      sprintf(bufferAux, "Long Break   >.<", cycle);
-
-      lcd.print(bufferAux);
-
-      lcd.setCursor(0,1);
+  lcd.setCursor(0,0);
+  lcd.print("Pomodoro Timer"); 
      
-      sprintf(buffer, "%d seconds", count); 
+  lcd.setCursor(0,1);
+  lcd.print("Pause");      
+}
 
-      lcd.print(buffer);
+void printStartTimer(LiquidCrystal_I2C lcd){
+  
+  lcd.clear();
+  
+  lcd.setCursor(0,0);
+  lcd.print("Pomodoro Timer");
+   
+  lcd.setCursor(0,1);
+  lcd.print("Start!");
+}
 
-      count++;
+void printWaitStartTimer(LiquidCrystal_I2C lcd){
 
-      delay(1000);
+  lcd.clear();
 
-      if(count > timeToLongBreak){
+  lcd.setCursor(0,0);
+  lcd.print("Pomodoro Timer"); 
+     
+  lcd.setCursor(0,1);
+  lcd.print("Wait start >");
+}
+
+void menu(bool *start, bool *work, int count, int lastState){
+  
+  if(isPressed(lastState) && !*start && count == 0){
+    
+   *start = true;
+
+   *work = true;
+
+   printStartTimer(lcd);
+    
+   bip();
+  
+  }else if(isPressed(lastState) && *start){
+
+     *start = false;
+   
+  }else if(isPressed(lastState) && !*start){
+
+     *start = true; 
+
+  }else if(!*start && count != 0){
+
+     printPauseTimer(lcd);
+   
+  }else{
+  
+     printWaitStartTimer(lcd);
+  }    
+}
+
+void loop(){
+ 
+  lcd.clear();
+
+  menu(&start, &work, count, lastState); 
+
+  if(start){
+
+    if(work){
+      
+      printWork(lcd, cycle, count);
+     
+      if(count == timeToWork){
+      
+        count = 0;
+        work = false;
+        breakTime = true;
+
+        bip();
+      }
+    }
+
+    if(breakTime){
+   
+      if(cycle == 3){
+
+        longBreakTime = true;
+   
+      }else{
+
+        printBreak(lcd, cycle, count);
+
+        if(count == timeToBreak){
+
+          count = 0;
+          cycle++;
+          work = true;
+          breakTime = false;
+
+          bip();
+        }
+      }
+    }
+
+    if(longBreakTime){
+
+      printLongBreak(lcd, cycle, count);
+      
+      if(count == timeToLongBreak){
 
         count = 0;
         cycle = 1;
         work = true;
         breakTime = false;
+        longBreakTime = false;
 
         bip();
-      }
-
-      return;
-    }
-
-    lcd.setCursor(0,0);
-
-    sprintf(bufferAux, "Break         %dC", cycle);
-
-    lcd.print(bufferAux);
-
-    lcd.setCursor(0,1);
-     
-    sprintf(buffer, "%d seconds", count); 
-
-    lcd.print(buffer);
+      }   
+    } 
 
     count++;
-
-    delay(1000);
-
-    if(count > timeToBreak){
-
-      count = 0;
-      cycle++;
-      work = true;
-      breakTime = false;
-
-      bip();
-    }
-
-    return;
-
   }
-
-  if(lastState == LOW && currentState == HIGH){
-    
-    lcd.setCursor(0,0);
-    lcd.print("Pomodoro Timer");
-    
-    lcd.setCursor(0,1);
-    lcd.print("Start!");
-    
-    work = true;
-    
-    count = 0;
-
-    cycle++;
-
-    bip();
-
-    }else{
-
-      count++;
-
-      lcd.setCursor(0,0);
-      lcd.print("Pomodoro Timer"); 
-      
-      lcd.setCursor(0,1);
-
-      if(count % 2 == 1){
-      
-        lcd.print("Wait start >");
-      
-      }else{
-
-        lcd.print("Wait start <");
-      }
-    }    
   
-  lastState = currentState;
-
+  lastState = digitalRead(TOUCH);
+  
   delay(500);
- 
- /*
- for (int positionCounter = 0; positionCounter < 13; positionCounter++) {
-    // scroll one position left:
-    lcd.scrollDisplayLeft();
-    // wait a bit:
-    delay(300);
-  }*/    
-
 }
