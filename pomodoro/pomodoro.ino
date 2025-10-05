@@ -18,9 +18,10 @@ bool work = false;
 bool breakTime = false;
 bool longBreakTime = false;
 
-int timeToBreak = 40;
-int timeToWork = 40;
-int timeToLongBreak = 40;
+//in seconds
+int timeToBreak = 300; //5 minutes
+int timeToWork = 1500; //25 minutes
+int timeToLongBreak = 600; //10 minutes
 
 int cycle = 1;
 int count = 0;
@@ -263,5 +264,5 @@ void loop(){
   
   lastState = digitalRead(TOUCH);
   
-  delay(500);
+  delay(1000);
 }
